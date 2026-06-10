@@ -70,6 +70,20 @@ export const getCardSchema = z.object({
   includeDetails: z.boolean().optional().default(false)
 });
 
+export const addCardLabelSchema = z.object({
+  apiKey: z.string().min(1, 'API key is required'),
+  token: z.string().min(1, 'Token is required'),
+  cardId: trelloIdSchema,
+  labelId: trelloIdSchema
+});
+
+export const removeCardLabelSchema = z.object({
+  apiKey: z.string().min(1, 'API key is required'),
+  token: z.string().min(1, 'Token is required'),
+  cardId: trelloIdSchema,
+  labelId: trelloIdSchema
+});
+
 export const deleteCardSchema = z.object({
   apiKey: z.string().min(1, 'API key is required'),
   token: z.string().min(1, 'Token is required'),
@@ -106,6 +120,14 @@ export function validateMoveCard(data: unknown) {
 
 export function validateGetCard(data: unknown) {
   return getCardSchema.parse(data);
+}
+
+export function validateAddCardLabel(data: unknown) {
+  return addCardLabelSchema.parse(data);
+}
+
+export function validateRemoveCardLabel(data: unknown) {
+  return removeCardLabelSchema.parse(data);
 }
 
 export function validateDeleteCard(data: unknown) {

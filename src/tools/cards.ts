@@ -1,12 +1,14 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { TrelloClient } from '../trello/client.js';
-import { 
-  validateCreateCard, 
-  validateUpdateCard, 
-  validateMoveCard, 
+import {
+  validateCreateCard,
+  validateUpdateCard,
+  validateMoveCard,
   validateGetCard,
-  formatValidationError 
+  validateAddCardLabel,
+  validateRemoveCardLabel,
+  formatValidationError
 } from '../utils/validation.js';
 
 export const createCardTool: Tool = {
@@ -359,6 +361,146 @@ export const getCardTool: Tool = {
     required: ['apiKey', 'token', 'cardId']
   }
 };
+
+export const addCardLabelTool: Tool = {
+  name: 'add_card_label',
+  description: 'Add a single label to a Trello card without affecting its other labels. Use trello_get_board_labels to find label IDs.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      apiKey: {
+        type: 'string',
+        description: 'Trello API key (automatically provided)'
+      },
+      token: {
+        type: 'string',
+        description: 'Trello API token (automatically provided)'
+      },
+      cardId: {
+        type: 'string',
+        description: 'ID of the card to label',
+        pattern: '^[a-f0-9]{24}$'
+      },
+      labelId: {
+        type: 'string',
+        description: 'ID of the label to add (use trello_get_board_labels to list available labels)',
+        pattern: '^[a-f0-9]{24}$'
+      }
+    },
+    required: ['apiKey', 'token', 'cardId', 'labelId']
+  }
+};
+
+export async function handleAddCardLabel(args: unknown) {
+  try {
+    const { apiKey, token, cardId, labelId } = validateAddCardLabel(args);
+
+    const client = new TrelloClient({ apiKey, token });
+    const response = await client.addCardLabel(cardId, labelId);
+
+    const result = {
+      summary: `Added label ${labelId} to card ${cardId}`,
+      labels: response.data.map(label => ({
+        id: label.id,
+        name: label.name,
+        color: label.color
+      })),
+      rateLimit: response.rateLimit
+    };
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  } catch (error) {
+    const errorMessage = error instanceof z.ZodError
+      ? formatValidationError(error)
+      : error instanceof Error
+        ? error.message
+        : 'Unknown error occurred';
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error adding label to card: ${errorMessage}`
+        }
+      ],
+      isError: true
+    };
+  }
+}
+
+export const removeCardLabelTool: Tool = {
+  name: 'remove_card_label',
+  description: 'Remove a single label from a Trello card without affecting its other labels.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      apiKey: {
+        type: 'string',
+        description: 'Trello API key (automatically provided)'
+      },
+      token: {
+        type: 'string',
+        description: 'Trello API token (automatically provided)'
+      },
+      cardId: {
+        type: 'string',
+        description: 'ID of the card to modify',
+        pattern: '^[a-f0-9]{24}$'
+      },
+      labelId: {
+        type: 'string',
+        description: 'ID of the label to remove (use get_card with includeDetails to see current labels)',
+        pattern: '^[a-f0-9]{24}$'
+      }
+    },
+    required: ['apiKey', 'token', 'cardId', 'labelId']
+  }
+};
+
+export async function handleRemoveCardLabel(args: unknown) {
+  try {
+    const { apiKey, token, cardId, labelId } = validateRemoveCardLabel(args);
+
+    const client = new TrelloClient({ apiKey, token });
+    await client.removeCardLabel(cardId, labelId);
+
+    const result = {
+      summary: `Removed label ${labelId} from card ${cardId}`
+    };
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(result, null, 2)
+        }
+      ]
+    };
+  } catch (error) {
+    const errorMessage = error instanceof z.ZodError
+      ? formatValidationError(error)
+      : error instanceof Error
+        ? error.message
+        : 'Unknown error occurred';
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error removing label from card: ${errorMessage}`
+        }
+      ],
+      isError: true
+    };
+  }
+}
 
 export async function handleGetCard(args: unknown) {
   try {

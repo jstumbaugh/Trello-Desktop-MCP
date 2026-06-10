@@ -29,15 +29,19 @@ import {
   handleGetLists
 } from './tools/boards.js';
 
-import { 
-  createCardTool, 
+import {
+  createCardTool,
   updateCardTool,
   moveCardTool,
   getCardTool,
+  addCardLabelTool,
+  removeCardLabelTool,
   handleCreateCard,
   handleUpdateCard,
   handleMoveCard,
-  handleGetCard
+  handleGetCard,
+  handleAddCardLabel,
+  handleRemoveCardLabel
 } from './tools/cards.js';
 
 import {
@@ -134,7 +138,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       trelloGetCardAttachmentsTool,
       trelloGetCardChecklistsTool,
       trelloGetBoardMembersTool,
-      trelloGetBoardLabelsTool
+      trelloGetBoardLabelsTool,
+      addCardLabelTool,
+      removeCardLabelTool
     ]
   };
 });
@@ -234,7 +240,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'trello_get_board_labels':
         result = await handleTrelloGetBoardLabels(argsWithCredentials);
         break;
-        
+
+      case 'add_card_label':
+        result = await handleAddCardLabel(argsWithCredentials);
+        break;
+
+      case 'remove_card_label':
+        result = await handleRemoveCardLabel(argsWithCredentials);
+        break;
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

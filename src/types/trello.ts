@@ -145,6 +145,10 @@ export interface MoveCardRequest {
   pos?: number | string | undefined;
 }
 
+export interface AddCardLabelRequest {
+  value: string;
+}
+
 export interface TrelloError {
   message: string;
   error?: string;

@@ -1,13 +1,15 @@
 import { logger } from '../utils/logger.js';
 import { insights } from '../utils/appInsights.js';
-import type { 
-  TrelloCredentials, 
-  TrelloBoard, 
-  TrelloList, 
-  TrelloCard, 
+import type {
+  TrelloCredentials,
+  TrelloBoard,
+  TrelloList,
+  TrelloCard,
+  TrelloLabel,
   CreateCardRequest,
   UpdateCardRequest,
   MoveCardRequest,
+  AddCardLabelRequest,
   TrelloError,
   RateLimitInfo,
   TrelloApiResponse
@@ -365,6 +367,26 @@ export class TrelloClient {
       `/cards/${cardId}`,
       { params },
       `Get card ${cardId}`
+    );
+  }
+
+  async addCardLabel(cardId: string, labelId: string): Promise<TrelloApiResponse<TrelloLabel[]>> {
+    const body: AddCardLabelRequest = { value: labelId };
+    return this.makeRequest<TrelloLabel[]>(
+      `/cards/${cardId}/idLabels`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body)
+      },
+      `Add label ${labelId} to card ${cardId}`
+    );
+  }
+
+  async removeCardLabel(cardId: string, labelId: string): Promise<TrelloApiResponse<void>> {
+    return this.makeRequest<void>(
+      `/cards/${cardId}/idLabels/${labelId}`,
+      { method: 'DELETE' },
+      `Remove label ${labelId} from card ${cardId}`
     );
   }
 
